@@ -41,9 +41,46 @@ def _load_nc_file(file: str, variable: str | list = None) -> pd.DataFrame:
         pd.DataFrame: DataFrame containing the request variable(s) time-series data.
 
     Raises:
-        
+        TypeError: If the variable(s) is not of type str or list.
+        ValueError: If the variable(s) is not present in the netCDF file.
+        ValueError: If the variable(s) is not supported (does not end with "_t" or "_st").
     """
-    pass
+    # Load the netCDF file into a Dataset
+    ds = Dataset(file, "r")
+
+    # Check if variable(s) is provided and is of correct type
+    if variable is not None:
+        if isinstance(variable, str):
+            variable = [variable]
+        elif not isinstance(variable, list):
+            raise TypeError("Variable(s) must be a string or a list of strings.")
+    else:
+        # Retrieve all eligible variables if no specific variable(s) is provided
+        variable = [var for var in ds["Diagnostics"].variables.keys()
+                    if var.endswith("_t") or var.endswith("_st")]
+
+    # Assign time and selected variable(s) to a dictionary
+    data = {"time": ds["Grids"]["time"][:]}
+    for var in variable:
+        # Current capabilities only support variabels ending with "_t" or "_st"
+        if not (var.endswith("_t") or var.endswith("_st")):
+            raise ValueError(f"""Variable '{var}' is not supported with current capabilities.
+                             Only variables ending with '_t' or '_st' are supported.""")
+
+        # Check if variable(s) exists in Dataset
+        if var not in ds["Diagnostics"].variables:
+            raise ValueError(f"Variable '{var}' not found in the netCDF file.")
+         
+        # Handle multi-dimensional variables
+        if ds["Diagnostics"][var].ndim > 1:
+            ds["Diagnostics"][var][:].flatten()
+
+        data[var] = ds["Diagnostics"][var][:]
+
+    ds.close()
+
+    # Return DataFrame with selected variable(s)
+    return pd.DataFrame(data)
 
 def _load_csv_file(file: str, variable: str | list = None) -> pd.DataFrame:
     """Load a GX output file in the form of a CSV file and retrieve selected variable(s).
@@ -59,8 +96,9 @@ def _load_csv_file(file: str, variable: str | list = None) -> pd.DataFrame:
     Raises:
         TypeError: If the variable(s) is not of type str or list.
         ValueError: If the variable(s) is not present in the CSV file.
+        ValueError: If the variable(s) is not supported (does not end with "_t" or "_st").
     """
-    # Load the file into a DataFrame
+    # Load the CSV file into a DataFrame
     df = pd.read_csv(file)
     
     # Check if variable(s) is provided and is of correct type
@@ -69,20 +107,26 @@ def _load_csv_file(file: str, variable: str | list = None) -> pd.DataFrame:
             variable = [variable]
         elif not isinstance(variable, list):
             raise TypeError("Variable(s) must be a string or a list of strings.")
+    else:
+        # Retrieve all eligible variables if no specific variable(s) is provided
+        variable = [var for var in df.columns if var.endswith("_t") or var.endswith("_st")]
 
-        data = {"time": df["time"]}
-        for var in variable:
-            # Check if variable(s) exist in DataFrame
-            if var not in df.columns:
-                raise ValueError(f"Variable '{var}' not found in the CSV file.")
+    # Assign time and selected variable(s) to a dictionary
+    data = {"time": df["time"]}
+    for var in variable:
+         # Current capabilities only support variabels ending with "_t" or "_st"
+        if not (var.endswith("_t") or var.endswith("_st")):
+            raise ValueError(f"""Variable '{var}' is not supported with current capabilities.
+                             Only variables ending with '_t' or '_st' are supported.""")
+        
+        # Check if variable(s) exists in DataFrame
+        if var not in df.columns:
+            raise ValueError(f"Variable '{var}' not found in the CSV file.")
 
-            data[var] = df[var]
+        data[var] = df[var]
 
-        # Return DataFrame with selected variable(s)
-        return pd.DataFrame(data)
-
-    # Return entire DataFrame
-    else: return df
+     # Return DataFrame with selected variable(s)
+    return pd.DataFrame(data)
 
 def export_file(df: pd.DataFrame, file: str, format: str = "csv"):
     pass
