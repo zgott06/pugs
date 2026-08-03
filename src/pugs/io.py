@@ -15,11 +15,19 @@ def load_file(file: str, variable: str | list = None) -> pd.DataFrame:
     
     Raises:
         FileNotFoundError: If the file does not exist.
-        TypeError: If the file format is not supported (neither .nc nor .csv).
+        TypeError: If the variable(s) is not of type str, list, or None.
+        ValueError: If the file format is not supported (neither .nc nor .csv).
     """
     # Check if the file exists
     if not os.path.isfile(file):
         raise FileNotFoundError(f"The file '{file}' does not exist.")
+
+    # Check if variable(s) is provided and is of correct type
+    if variable is not None:
+        if isinstance(variable, str):
+            variable = [variable]
+        elif not isinstance(variable, list):
+            raise TypeError("Variable(s) must be a string or a list of strings.")
 
     # Determine file format and call appropriate loading function
     if file.endswith(".nc"):
@@ -41,21 +49,14 @@ def _load_nc_file(file: str, variable: str | list = None) -> pd.DataFrame:
         pd.DataFrame: DataFrame containing the request variable(s) time-series data.
 
     Raises:
-        TypeError: If the variable(s) is not of type str or list.
         ValueError: If the variable(s) is not present in the netCDF file.
         ValueError: If the variable(s) is not supported (does not end with "_t" or "_st").
     """
     # Load the netCDF file into a Dataset
     ds = Dataset(file, "r")
 
-    # Check if variable(s) is provided and is of correct type
-    if variable is not None:
-        if isinstance(variable, str):
-            variable = [variable]
-        elif not isinstance(variable, list):
-            raise TypeError("Variable(s) must be a string or a list of strings.")
-    else:
-        # Retrieve all eligible variables if no specific variable(s) is provided
+    # Retrieve all eligible variables if no specific variable(s) is provided
+    if variable is None:
         variable = [var for var in ds["Diagnostics"].variables.keys()
                     if var.endswith("_t") or var.endswith("_st")]
 
@@ -94,21 +95,14 @@ def _load_csv_file(file: str, variable: str | list = None) -> pd.DataFrame:
         pd.DataFrame: DataFrame containing the request variable(s) time-series data.
     
     Raises:
-        TypeError: If the variable(s) is not of type str or list.
         ValueError: If the variable(s) is not present in the CSV file.
         ValueError: If the variable(s) is not supported (does not end with "_t" or "_st").
     """
     # Load the CSV file into a DataFrame
     df = pd.read_csv(file)
     
-    # Check if variable(s) is provided and is of correct type
-    if variable is not None:
-        if isinstance(variable, str):
-            variable = [variable]
-        elif not isinstance(variable, list):
-            raise TypeError("Variable(s) must be a string or a list of strings.")
-    else:
-        # Retrieve all eligible variables if no specific variable(s) is provided
+    # Retrieve all eligible variables if no specific variable(s) is provided
+    if variable is None:
         variable = [var for var in df.columns if var.endswith("_t") or var.endswith("_st")]
 
     # Assign time and selected variable(s) to a dictionary
