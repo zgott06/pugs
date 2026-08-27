@@ -65,18 +65,19 @@ def _load_nc_file(file: str, variable: str | list = None) -> pd.DataFrame:
     for var in variable:
         # Current capabilities only support variabels ending with "_t" or "_st"
         if not (var.endswith("_t") or var.endswith("_st")):
-            raise ValueError(f"""Variable '{var}' is not supported with current capabilities.
-                             Only variables ending with '_t' or '_st' are supported.""")
+            raise ValueError(f"""Variable '{var}' is not supported with current capabilities. " \
+                "Only variables ending with '_t' or '_st' are supported.""")
 
         # Check if variable(s) exists in Dataset
         if var not in ds["Diagnostics"].variables:
             raise ValueError(f"Variable '{var}' not found in the netCDF file.")
          
         # Handle multi-dimensional variables
-        if ds["Diagnostics"][var].ndim > 1:
-            ds["Diagnostics"][var][:].flatten()
+        var_data = ds["Diagnostics"][var][:]
+        if var_data.ndim > 1:
+            var_data = var_data.flatten()
 
-        data[var] = ds["Diagnostics"][var][:]
+        data[var] = var_data
 
     ds.close()
 
@@ -110,8 +111,8 @@ def _load_csv_file(file: str, variable: str | list = None) -> pd.DataFrame:
     for var in variable:
          # Current capabilities only support variabels ending with "_t" or "_st"
         if not (var.endswith("_t") or var.endswith("_st")):
-            raise ValueError(f"""Variable '{var}' is not supported with current capabilities.
-                             Only variables ending with '_t' or '_st' are supported.""")
+            raise ValueError(f"""Variable '{var}' is not supported with current capabilities. " \
+                "Only variables ending with '_t' or '_st' are supported.""")
         
         # Check if variable(s) exists in DataFrame
         if var not in df.columns:
