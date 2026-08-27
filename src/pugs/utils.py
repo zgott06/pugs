@@ -59,9 +59,9 @@ def stats(df: pd.DataFrame, variable: str | list = None) -> dict:
             variable = [variable]
         elif not isinstance(variable, list):
             raise TypeError("Variable(s) must be a string or a list of strings.")
-
+    else:
         # Retrieve all eligible variables if no specific variable(s) is provided
-        variable = [var for var in df.columns if var is not "time"]
+        variable = [var for var in df.columns if var != "time"]
 
     # Check if variable(s) is present in the DataFrame
     for var in variable:
@@ -73,7 +73,7 @@ def stats(df: pd.DataFrame, variable: str | list = None) -> dict:
         mean = df[var].mean()
         median = df[var].median()
         std = df[var].std()
-        var = df[var].var()
+        variance = df[var].var()
         sem = df[var].sem()
         cv = std / mean
         mad = (df[var] - mean).abs().mean()
@@ -86,20 +86,20 @@ def stats(df: pd.DataFrame, variable: str | list = None) -> dict:
         iqr = q3 - q1
 
         dict_stats[var] = {
-            "mean": mean,
-            "median": median,
-            "std": std,
-            "var": var,
-            "sem": sem,
-            "cv": cv,
-            "mad": mad,
-            "min": min,
-            "max": max,
-            "ptp": ptp,
+            "mean": float(mean),
+            "median": float(median),
+            "std": float(std),
+            "var": float(variance),
+            "sem": float(sem),
+            "cv": float(cv),
+            "mad": float(mad),
+            "min": float(min),
+            "max": float(max),
+            "ptp": float(ptp),
             "size": size,
-            "q1": q1,
-            "q3": q3,
-            "iqr": iqr,
+            "q1": float(q1),
+            "q3": float(q3),
+            "iqr": float(iqr),
         }
 
     return dict_stats
