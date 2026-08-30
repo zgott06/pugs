@@ -3,10 +3,10 @@ import pandas as pd
 from netCDF4 import Dataset
 
 def load_file(file: str, variable: str | list = None) -> pd.DataFrame:
-    """Load a GX output file and retrieve selected variable(s).
+    """Load a GX output file and retrieve specified variable(s).
 
     Args:
-        file (str): GX output file path (.nc or .csv)
+        file (str): GX output file path (netCDF file ending in ".nc")
         variable (str or list, optional): Variable(s) to retrieve. If None, retrieves all.
             Defaults to None.
 
@@ -16,7 +16,9 @@ def load_file(file: str, variable: str | list = None) -> pd.DataFrame:
     Raises:
         FileNotFoundError: If the file does not exist.
         TypeError: If the variable(s) is not of type str, list, or None.
-        ValueError: If the file format is not supported (neither .nc nor .csv).
+        ValueError: If the file format is not a netCDF file ending in ".nc".
+        ValueError: If the variable(s) is not present in the netCDF file.
+        ValueError: If the variable(s) is not supported (does not end with "_t" or "_st").
     """
     # Check if the file exists
     if not os.path.isfile(file):
@@ -29,29 +31,10 @@ def load_file(file: str, variable: str | list = None) -> pd.DataFrame:
         elif not isinstance(variable, list):
             raise TypeError("Variable(s) must be a string or a list of strings.")
 
-    # Determine file format and call appropriate loading function
-    if file.endswith(".nc"):
-        return _load_nc_file(file, variable=variable)
-    elif file.endswith(".csv"):
-        return _load_csv_file(file, variable=variable)
-    else:
-        raise TypeError("Unsupported file format. Please provide a .nc or .csv file.")
+    # Check if the file is a netCDF file
+    if not file.endswith(".nc"):
+        raise TypeError("Unsupported file format. Please provide a netCDF file ending in '.nc'.")
 
-def _load_nc_file(file: str, variable: str | list = None) -> pd.DataFrame:
-    """Load a GX output file in the form of a netCDF file and retrieve selected variable(s).
-    
-    Args:
-        file (str): GX output file path (.nc)
-        variable (str or list, optional): Variable(s) to retrieve. If None, retrieves all.
-            Defaults to None.
-    
-    Returns:
-        pd.DataFrame: DataFrame containing the request variable(s) time-series data.
-
-    Raises:
-        ValueError: If the variable(s) is not present in the netCDF file.
-        ValueError: If the variable(s) is not supported (does not end with "_t" or "_st").
-    """
     # Load the netCDF file into a Dataset
     ds = Dataset(file, "r")
 
@@ -84,50 +67,45 @@ def _load_nc_file(file: str, variable: str | list = None) -> pd.DataFrame:
     # Return DataFrame with selected variable(s)
     return pd.DataFrame(data)
 
-def _load_csv_file(file: str, variable: str | list = None) -> pd.DataFrame:
-    """Load a GX output file in the form of a CSV file and retrieve selected variable(s).
-    
+def export_file(df: pd.DataFrame, file: str, format: str = "csv") -> str:
+    """Load a DataFrame and export to a specified file format.
+
     Args:
-        file (str): GX output file path (.csv)
-        variable (str or list, optional): Variable(s) to retrieve. If None, retrieves all.
-            Defaults to None.
+        df (pd.DataFrame): DataFrame to export.
+        file (str): Output file path.
+        format (str, optional): Output file format.
+            Options are "csv", "excel", "json", or "html". Defaults to "csv".
     
     Returns:
-        pd.DataFrame: DataFrame containing the request variable(s) time-series data.
-    
+        str: Path to exported file.
+
     Raises:
-        ValueError: If the variable(s) is not present in the CSV file.
-        ValueError: If the variable(s) is not supported (does not end with "_t" or "_st").
+        TypeError: If the df is not a pandas DataFrame.
+        TypeError: If the file is not of type string.
+        KeyError: If the format is not one of the supported options.
     """
-    # Load the CSV file into a DataFrame
-    df = pd.read_csv(file)
-    
-    # Retrieve all eligible variables if no specific variable(s) is provided
-    if variable is None:
-        variable = [var for var in df.columns if var.endswith("_t") or var.endswith("_st")]
+    # Check if df is a pandas DataFrame
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Input df must be a pandas DataFrame. Consider preprocessing data " \
+                        "with the load_file function.")
 
-    # Assign time and selected variable(s) to a dictionary
-    data = {"time": df["time"]}
-    for var in variable:
-         # Current capabilities only support variabels ending with "_t" or "_st"
-        if not (var.endswith("_t") or var.endswith("_st")):
-            raise ValueError(f"""Variable '{var}' is not supported with current capabilities. " \
-                "Only variables ending with '_t' or '_st' are supported.""")
-        
-        # Check if variable(s) exists in DataFrame
-        if var not in df.columns:
-            raise ValueError(f"Variable '{var}' not found in the CSV file.")
+    # Check if file is of type string
+    if not isinstance(file, str):
+        raise TypeError(f"Input file {file} must be a string.")
 
-        data[var] = df[var]
+    # Define map of file formats to corresponding functions
+    format_map = {
+        "csv": df.to_csv(file),
+        "excel": df.to_excel(file),
+        "json": df.to_json(file),
+        "html": df.to_html(file)
+    }
 
-     # Return DataFrame with selected variable(s)
-    return pd.DataFrame(data)
+    # Check if the file format is supported
+    if not isinstance(format, str) or format not in format_map:
+        raise KeyError(f"File format {format} is not supported. Please choose from: {list(format_map.keys())}")
 
-def export_file(df: pd.DataFrame, file: str, format: str = "csv"):
-    pass
+    # Call appropriate export method
+    format_map[format](file)
 
-def _export_csv_file(df: pd.DataFrame, file: str):
-    pass
-
-def _export_nc_file(df: pd.DataFrame, file: str):
-    pass
+    return file
