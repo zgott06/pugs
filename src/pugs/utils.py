@@ -76,11 +76,10 @@ def stats(df: pd.DataFrame, variable: str | list = None) -> dict:
         variance = df[var].var()
         sem = df[var].sem()
         cv = std / mean
-        mad = (df[var] - mean).abs().mean()
+        mad = (df[var] - median).abs().median()
         min = df[var].min()
         max = df[var].max()
         ptp = max - min
-        size = len(df[var])
         q1 = df[var].quantile(0.25)
         q3 = df[var].quantile(0.75)
         iqr = q3 - q1
@@ -96,7 +95,6 @@ def stats(df: pd.DataFrame, variable: str | list = None) -> dict:
             "min": float(min),
             "max": float(max),
             "ptp": float(ptp),
-            "size": size,
             "q1": float(q1),
             "q3": float(q3),
             "iqr": float(iqr),
