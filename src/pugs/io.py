@@ -95,17 +95,25 @@ def export_file(df: pd.DataFrame, file: str, format: str = "csv") -> str:
 
     # Define map of file formats to corresponding functions
     format_map = {
-        "csv": df.to_csv(file),
-        "excel": df.to_excel(file),
-        "json": df.to_json(file),
-        "html": df.to_html(file)
+        "csv": lambda: df.to_csv(file, index=False),
+        "excel": lambda: df.to_excel(file, index=False),
+        "json": lambda: df.to_json(file, orient="records"),
+        "html": lambda: df.to_html(file, index=False)
     }
+    format_keys = ["csv", "excel", "json", "html"]
 
     # Check if the file format is supported
-    if not isinstance(format, str) or format not in format_map:
-        raise KeyError(f"File format {format} is not supported. Please choose from: {list(format_map.keys())}")
+    if not isinstance(format, str) or format not in format_keys:
+        raise KeyError(f"File format {format} is not supported. Please choose from: {format_keys}")
+
+    # Prepare file extension
+    if not file.endswith(f".{format}"):
+        if format == "excel":
+            file += ".xlsx"
+        else:
+            file += f".{format}"
 
     # Call appropriate export method
-    format_map[format](file)
+    format_map[format]()
 
     return file
