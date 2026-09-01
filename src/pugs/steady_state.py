@@ -27,13 +27,13 @@ def steady_state(df: pd.DataFrame, variable: str, method: str = "std", **kwargs)
         raise TypeError("Input df must be a pandas DataFrame. Consider preprocessing data " \
                         "with the load_file function.")
 
-    # Check if variable is a string
+    # Check if variable is of type string
     if not isinstance(variable, str):
-        raise TypeError(f"Variable {variable} must be a string.")
+        raise TypeError(f"Input variable {variable} must be a string.")
 
     # Check if variable is present in the DataFrame
     if variable not in df.columns:
-        raise ValueError(f"Variable {variable} is not present in the DataFrame.")
+        raise ValueError(f"Input variable {variable} is not present in the DataFrame.")
 
     # Define map of methods to corresponding functions
     method_map = {
@@ -67,23 +67,25 @@ def _std_method(df: pd.DataFrame, variable: str) -> float:
     x = df[variable].to_numpy()
     
     # Check if signal fails to initate
-    if np.max(x) < 1e-6: return None
+    if np.max(x) < 1e-4: return None
 
     # Compute standard deviation over time
     stds = np.array([np.std(x[:i+1]) for i in range(len(t))])
 
     # Find time of maximum standard deviation
-    ss_start = t[np.argmax(stds)]
+    start_time = t[np.argmax(stds)]
 
-    return ss_start
+    return start_time
 
-def _linreg_method(df: pd.DataFrame, variable: str) -> float:
+def _linreg_method(df: pd.DataFrame, variable: str, slope_tol=0.05) -> float:
     """Detect the start of the steady-state region by finding when the slope of linear
-        regression is maximized on a forward search.
+        regression is maximized on a forward search, and if the remaining data fits
+        the slope tolerenace criteria.
 
     Args:
         df (pd.DataFrame): DataFrame containing time-series data.
         variable (str): Variable to analyze for steady-state detection.
+        slope_tol (float, optional): Tolerance for the slope criteria. Defaults to 0.05.
 
     Returns:
         float: Steady-state start time if detected, otherwise None.
@@ -93,19 +95,23 @@ def _linreg_method(df: pd.DataFrame, variable: str) -> float:
     x = df[variable].to_numpy()
     
     # Check if signal fails to initate
-    if np.max(x) < 1e-6: return None
+    if np.max(x) < 1e-4: return None
 
     # Compute slope over time
     slopes = []
     for i in range(2, len(t)):
-        slope, _, _, _, _ = stats.linregress(t[:i], x[:i])
-        slopes.append(slope)
+        slopes.append(stats.linregress(t[:i], x[:i]).slope)
 
     # Find time of maximum slope
     slopes = np.array(slopes)
-    ss_start = t[np.argmax(slopes) + 2]
+    best_idx = np.argmax(slopes) + 2
+    start_time = t[best_idx]
 
-    return ss_start
+    # Check slope tolerance
+    if abs(stats.linregress(t[best_idx:], x[best_idx:]).slope) >= slope_tol:
+        return None
+
+    return start_time
 
 def _adf_method(df: pd.DataFrame, variable: str) -> float:
     pass
