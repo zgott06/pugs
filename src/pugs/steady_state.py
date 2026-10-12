@@ -77,7 +77,7 @@ def _std_method(df: pd.DataFrame, variable: str) -> float:
 
     return start_time
 
-def _linreg_method(df: pd.DataFrame, variable: str, slope_tol=0.05) -> float:
+def _linreg_method(df: pd.DataFrame, variable: str, slope_tol=0.1) -> float:
     """Detect the start of the steady-state region by finding when the slope of linear
         regression is maximized on a forward search, and if the remaining data fits
         the slope tolerenace criteria.
@@ -85,8 +85,8 @@ def _linreg_method(df: pd.DataFrame, variable: str, slope_tol=0.05) -> float:
     Args:
         df (pd.DataFrame): DataFrame containing time-series data.
         variable (str): Variable to analyze for steady-state detection.
-        slope_tol (float, optional): Tolerance for the slope criteria. Defaults to 0.05.
-
+        slope_tol (float, optional): Tolereance for the slope criteria. Defaults to 0.1 (10%).
+    
     Returns:
         float: Steady-state start time if detected, otherwise None.
     """
@@ -107,8 +107,15 @@ def _linreg_method(df: pd.DataFrame, variable: str, slope_tol=0.05) -> float:
     best_idx = np.argmax(slopes) + 2
     start_time = t[best_idx]
 
-    # Check slope tolerance
-    if abs(stats.linregress(t[best_idx:], x[best_idx:]).slope) >= slope_tol:
+    # Compute and normalize slope of the tail
+    tail_t = t[best_idx:]
+    tail_x = x[best_idx:]
+    if len(tail_t) < 2: return None
+    tail_slope = stats.linregress(tail_t, tail_x).slope
+    norm_slope = abs(tail_slope) * (tail_t[-1] - tail_t[0]) / abs(np.mean(tail_x))
+
+    # Check slope tolerance criteria
+    if norm_slope >= slope_tol:
         return None
 
     return start_time

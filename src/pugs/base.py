@@ -49,6 +49,7 @@ def process_file(trim_variable: str, input_file: str, output_file: str = None,
             "trim_variable": trim_variable,
             "variable": var,
             "method": method,
+            **kwargs,
             "start_time": start_time
         })
 
@@ -58,12 +59,11 @@ def process_file(trim_variable: str, input_file: str, output_file: str = None,
     # Prepare output file
     if output_file is None:
         output_file = f"{trim_variable}_{method}"
+        if kwargs:
+            output_file += "_" + "_".join([f"{key}_{value}" for key, value in kwargs.items()])
 
     # Export results
     df = pd.DataFrame(results)
-    output_file =export_file(df, output_file, format=output_format)
+    output_file = export_file(df, output_file, format=output_format)
 
-    return output_file 
-
-def process_folder():
-    pass
+    return output_file
