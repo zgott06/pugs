@@ -6,13 +6,13 @@ PUGS is Python-based toolkit for analyzing time-series data of turbulent plasma 
 
 PUGS requires Python 3.10 or newer. The distribution is named `pugs_plasma`, while the Python import is `pugs`.
 
-Once the first release is published on PyPI, install it with:
+Install from PyPI:
 
 ```bash
 python -m pip install pugs_plasma
 ```
 
-Before publication, install directly from GitHub:
+To install the latest development version directly from GitHub:
 
 ```bash
 python -m pip install "git+https://github.com/zgott06/pugs.git"
