@@ -17,13 +17,15 @@ def process_file(trim_variable: str, input_file: str, output_file: str = None,
 
         Args:
             trim_variable (str): Variable to analyze for steady-state detection.
-            input_file (str): GX output file path (.nc or .csv)
+            input_file (str): GX output file path (.nc)
             output_file (str, optional): Output file path. If None, a default name is used.
-            output_format (str, optional): Output file format. Defaults to a CSV file.
+            output_format (str, optional): Output file format.
+                Options are "csv", "json", or "html". Defaults to "csv".
             variable (str or list, optional): Variable(s) to retrieve. If None, retrieves all.
                 Defaults to None
             method (str, optional): Method to use for steady-state detection.
-                Options are "std", "linreg", "adf", "acf", or "fourier". Defaults to "std".
+                Options are "std" or "linreg". Defaults to "std".
+                Methods "adf", "acf", and "fourier" are not implemented.
             **kwargs: Addtional keyword arguments for specific methods.
 
         Returns:

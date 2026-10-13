@@ -10,7 +10,8 @@ def steady_state(df: pd.DataFrame, variable: str, method: str = "std", **kwargs)
         df (pd.DataFrame): DataFrame containing time-series data.
         variable (str): Variable to analyze for steady-state detection.
         method (str, optional): Method to use for steady-state detection.
-            Options are "std", "linreg", "adf", "acf", or "fourier". Defaults to "std".
+            Options are "std" or "linreg". Defaults to "std".
+            Methods "adf", "acf", and "fourier" are not implemented.
         **kwargs: Additional keyword arguments for specific methods.
     
     Returns:
@@ -21,6 +22,7 @@ def steady_state(df: pd.DataFrame, variable: str, method: str = "std", **kwargs)
         TypeError: If the variable is not of type str.
         ValueError: If the variable is not present in the DataFrame.
         KeyError: If the method is not one of the supported options.
+        NotImplementedError: If the method is "adf", "acf", or "fourier".
     """
     # Check if df is a pandas DataFrame
     if not isinstance(df, pd.DataFrame):
@@ -121,10 +123,10 @@ def _linreg_method(df: pd.DataFrame, variable: str, slope_tol=0.1) -> float:
     return start_time
 
 def _adf_method(df: pd.DataFrame, variable: str) -> float:
-    pass
+    raise NotImplementedError("Method adf is not implemented.")
 
 def _acf_method(df: pd.DataFrame, variable: str) -> float:
-    pass
+    raise NotImplementedError("Method acf is not implemented.")
 
 def _fourier_method(df: pd.DataFrame, variable: str) -> float:
-    pass
+    raise NotImplementedError("Method fourier is not implemented.")
