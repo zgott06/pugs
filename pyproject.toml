@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pugs_plasma"
+version = "0.1.0"
+description = "Postprocessing Utilities for Gyrokinetic Simulations"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+
+authors = [
+    {name = "Zachary Gottlieb"},
+]
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "netCDF4",
+]
+
+keywords = ["plasma", "gyrokinetics", "steady-state", "time-series"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Repository = "https://github.com/zgott06/pugs"
+Issues = "https://github.com/zgott06/pugs/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pugs*"]
+namespaces = false
